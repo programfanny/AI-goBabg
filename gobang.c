@@ -115,7 +115,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam){
 			hpen[0] = CreatePen(PS_SOLID,3,RGB(255,0,0));
 			hpen[1] = CreatePen(PS_SOLID,3,RGB(0,0,255));
 			hpen[2] = CreatePen(PS_SOLID,1,RGB(0,0,0));
-			hpen[3] = CreatePen(PS_DASH,7,RGB(0,255,255));
+			hpen[3] = CreatePen(PS_DOT,7,RGB(0,255,255));
 
 			ReleaseDC(hwnd,hdc);
 			initGoBang(pBoard, pChess, &step);
