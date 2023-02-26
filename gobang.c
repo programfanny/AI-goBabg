@@ -248,8 +248,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam){
 		}	
 	void dispValue(int *pBoard,int *pChess,int step){
 		char buf[100];
-		for(int i=0;i<16;i++){
-			for(int j=0;j<16;j++){
+		for(int i=0;i<SIZE;i++){
+			for(int j=0;j<SIZE;j++){
 				
 			}
 		}
