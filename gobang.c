@@ -51,13 +51,14 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam){
 	RECT rect;
 	char buf[100];
 	int x,y,row,col,pos,dir,len;
+	HPEN hOldPen;
 
 	static int *pBoard;
 	static int *pChess;
 	static int step;
 	static int value;
 
-	static HPEN hpen[3];
+	static HPEN hpen[4];
 	static HDC mdc,mdc1;
 	static HBITMAP hBitmap,hBitmap1;
 	static BITMAP bitmap,bitmap1;
@@ -72,7 +73,6 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam){
 			srand(time(NULL));
 			pBoard = (int*)malloc( SIZE * SIZE * sizeof(int));
 			pChess = (int*)malloc( SIZE * SIZE * sizeof(int));
-
 			boardRect.left=180;
 			boardRect.top=50;
 			boardRect.right=690;
@@ -115,6 +115,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam){
 			hpen[0] = CreatePen(PS_SOLID,3,RGB(255,0,0));
 			hpen[1] = CreatePen(PS_SOLID,3,RGB(0,0,255));
 			hpen[2] = CreatePen(PS_SOLID,1,RGB(0,0,0));
+			hpen[3] = CreatePen(PS_DASH,7,RGB(0,255,255));
 
 			ReleaseDC(hwnd,hdc);
 			initGoBang(pBoard, pChess, &step);
@@ -123,19 +124,33 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam){
 			hdc=BeginPaint(hwnd,&ps);
 			BitBlt(hdc,boardRect.left,boardRect.top,boardWidth,boardWidth,mdc,0,0,SRCCOPY);
 			BitBlt(hdc,markRect.left,markRect.top,markWidth,markWidth,mdc1,0,0,SRCCOPY);
-			sprintf(buf,"step=%d value=%08X",step%2+1,value);
-			TextOut(hdc,10,10+(step%2+1)*20,buf,strlen(buf));
-			
+			if(step){
+				sprintf(buf,"side=%d value=%08X",(step-1)%2+1,value);
+				TextOut(hdc,10,10+((step-1)%2+1)*20,buf,strlen(buf));
+			}
 			if(value%16>4){
+				// return value in maxCount
+				//        |                   |         |    |    |
+				//  int :  xxxx xxxx xxxx xxxx|xxxx xxxx|xxxx|xxxx
+				//   bit                                       0-3 count
+				//   bit                                 4-7 dxdy
+				//   bit                       8-15 (x,y) beginning pos
+				//   bit    16-31 mark
+
 				pos=(value & 0x0000FF00)>>8;
 				row=pos>>4;col=pos&0x0F;
 				dir=(value & 0x000000F0)>>4;
-				len=value & 0x0000000F;
-				x=row+(dir>>2)*len;
-				y=col+(dir%4)*len;
-				MoveToEx(hdc,row,col,NULL);
-				LineTo(hdc,x,y);
-				MessageBox(NULL,"You are winner!","You win",MB_OK);
+				len=(value & 0x0000000F)-1;
+				x=row+(dir%4-1)*len;
+				y=col+((dir>>2)-1)*len;
+				hOldPen = SelectObject(hdc,hpen[3]);
+				MoveToEx(hdc,boardRect.left+15+row*30,boardRect.top+15+col*30,NULL);
+				LineTo(hdc,boardRect.left+15+x*30,boardRect.top+15+y*30);
+				SelectObject(hdc,hOldPen);
+				if((step-1)%2==0)
+					MessageBox(NULL,"你赢了!","winner",MB_OK);
+				else
+					MessageBox(NULL,"电脑赢了!","winner",MB_OK);
 				PostMessage(hwnd,WM_KEYDOWN,VK_F3,0);
 			}
 			EndPaint(hwnd,&ps);
